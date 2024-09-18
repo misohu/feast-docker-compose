@@ -1,0 +1,59 @@
+version: '3.7'
+services:
+  feast:
+    build:
+      context: ./feast_ui/
+      dockerfile: Dockerfile
+    container_name: feast
+    ports:
+      - "8889:8888"
+    volumes:
+      - ./feature_store_compose.yaml:/app/feature_store.yaml  # Mount feature_store.yaml
+    depends_on:
+      - registry  # Ensure registry is up before Feast
+
+  offline-store:
+    image: postgres:latest
+    container_name: offline-store
+    environment:
+      POSTGRES_USER: feast
+      POSTGRES_PASSWORD: feast
+      POSTGRES_DB: feast_offline
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d/
+
+  # online-store:
+  #   image: postgres:latest
+  #   container_name: online-store
+  #   environment:
+  #     POSTGRES_USER: feast
+  #     POSTGRES_PASSWORD: feast
+  #     POSTGRES_DB: feast_online
+  #   ports:
+  #     - "5433:5432"
+
+  online-store:
+    image: redis:latest
+    container_name: online-store-redis
+    ports:
+      - "6379:6379"  # Default Redis port
+    # environment:
+    #   # Add any specific environment variables here if needed
+    volumes:
+      - redis_data:/data  # Mount a volume to persist Redis data
+  
+
+  registry:
+    image: postgres:latest
+    container_name: registry
+    environment:
+      POSTGRES_USER: feast
+      POSTGRES_PASSWORD: feast
+      POSTGRES_DB: feast_registry
+    ports:
+      - "5433:5432"
+
+volumes:
+  redis_data:

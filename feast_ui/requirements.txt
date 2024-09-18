@@ -1,0 +1,3 @@
+feast
+feast[postgres]
+feast[redis]
